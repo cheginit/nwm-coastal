@@ -47,18 +47,11 @@ def cli() -> None:
     is_flag=True,
     help="Validate configuration without executing.",
 )
-@click.option(
-    "--inside-slurm",
-    is_flag=True,
-    hidden=True,
-    help="Indicate running inside a SLURM job (internal use).",
-)
 def run(
     config: Path,
     start_from: str | None,
     stop_after: str | None,
     dry_run: bool,
-    inside_slurm: bool,
 ) -> None:
     """Run the calibration workflow.
 
@@ -77,7 +70,6 @@ def run(
             start_from=start_from,
             stop_after=stop_after,
             dry_run=dry_run,
-            inside_slurm=inside_slurm,
         )
 
         if result.success:
@@ -177,7 +169,6 @@ def validate(config: Path) -> None:
 @click.argument(
     "output",
     type=click.Path(path_type=Path),
-    default="coastal_calibration.yaml",
 )
 @click.option(
     "--domain",
@@ -194,8 +185,7 @@ def validate(config: Path) -> None:
 def init(output: Path, domain: CoastalDomain, force: bool) -> None:
     """Create a minimal configuration file.
 
-    OUTPUT is the path where the configuration will be written
-    (default: coastal_calibration.yaml).
+    OUTPUT is the path where the configuration will be written.
 
     The generated config includes only required fields. Paths are auto-generated
     based on user, domain, and source settings.
@@ -217,7 +207,6 @@ def init(output: Path, domain: CoastalDomain, force: bool) -> None:
     start_date_str = start_date.strftime("%Y-%m-%d")
     username = os.environ.get("USER", "YOUR_USERNAME")
 
-    # Generate minimal config with comments
     config_content = f"""\
 # Minimal SCHISM configuration for {domain} domain
 #

@@ -187,7 +187,6 @@ class CoastalCalibRunner:
         start_from: str | None = None,
         stop_after: str | None = None,
         dry_run: bool = False,
-        inside_slurm: bool = False,
     ) -> WorkflowResult:
         """Execute the calibration workflow.
 
@@ -199,9 +198,6 @@ class CoastalCalibRunner:
             Stage name to stop after (skip later stages).
         dry_run : bool, default False
             If True, validate but don't execute.
-        inside_slurm : bool, default False
-            If True, indicates running inside a SLURM job. This can be used
-            to skip certain setup steps or change behavior accordingly.
 
         Returns
         -------
@@ -342,12 +338,19 @@ class CoastalCalibRunner:
         if not use_tpxo and boundary.stofs_file:
             stofs_file = str(boundary.stofs_file)
         elif not use_tpxo and paths.raw_download_dir:
-            # Auto-resolve from download directory
-            stofs_dir = paths.raw_download_dir / "coastal" / "stofs"
-            if stofs_dir.exists():
-                stofs_files = sorted(stofs_dir.glob("*.nc"))
-                if stofs_files:
-                    stofs_file = str(stofs_files[0])
+            # Auto-resolve from download directory using date-aware path
+            from coastal_calibration.downloader import get_stofs_path
+
+            expected = get_stofs_path(sim.start_date, paths.raw_download_dir)
+            if expected.exists():
+                stofs_file = str(expected)
+            else:
+                # Fallback: search for any STOFS file
+                stofs_dir = paths.raw_download_dir / "coastal" / "stofs"
+                if stofs_dir.exists():
+                    stofs_files = sorted(stofs_dir.rglob("*.fields.cwl.nc"))
+                    if stofs_files:
+                        stofs_file = str(stofs_files[0])
 
         script_lines = [
             "#!/usr/bin/env bash",
@@ -646,7 +649,6 @@ def run_workflow(
     start_from: str | None = None,
     stop_after: str | None = None,
     dry_run: bool = False,
-    inside_slurm: bool = False,
 ) -> WorkflowResult:
     """Run workflow from config file.
 
@@ -660,8 +662,6 @@ def run_workflow(
         Stage name to stop after.
     dry_run : bool, default False
         If True, validate but don't execute.
-    inside_slurm : bool, default False
-        If True, indicates running inside a SLURM job.
 
     Returns
     -------
@@ -674,7 +674,6 @@ def run_workflow(
         start_from=start_from,
         stop_after=stop_after,
         dry_run=dry_run,
-        inside_slurm=inside_slurm,
     )
 
 
