@@ -1567,22 +1567,39 @@ session).</p>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>└── param.nml
 </span></code></pre></div>
 <h3 id="6-schism_obs">6. schism_obs<a class="headerlink" href="#6-schism_obs" title="Permanent link">#</a></h3>
-<p><strong>Purpose:</strong> Discover NOAA CO-OPS observation stations and create <code>station.in</code>.</p>
-<p><strong>Enabled by:</strong> <code>model_config.include_noaa_gages: true</code></p>
-<p><strong>Depends on:</strong> <code>update_params</code> (which symlinks <code>hgrid.gr3</code> into the work directory)</p>
-<p><strong>Tasks:</strong></p>
-<ul>
-<li>Read open boundary nodes from <code>hgrid.gr3</code></li>
-<li>Compute concave hull of boundary node coordinates</li>
-<li>Query NOAA CO-OPS API for water level stations within the hull polygon</li>
-<li>Write <code>station.in</code> and <code>station_noaa_ids.txt</code> to the work directory</li>
-</ul>
-<p><strong>Runs On:</strong> Login node or compute node (Python, requires network access)</p>
+<p><strong>Purpose:</strong> Automatically discover NOAA CO-OPS water level stations within the model
+domain and generate a SCHISM <code>station.in</code> file so that SCHISM writes time-series output
+at those locations.</p>
+<p><strong>Enabled by:</strong> <code>model_config.include_noaa_gages: true</code> (disabled by default)</p>
+<p><strong>Depends on:</strong> <code>update_params</code> (which symlinks <code>hgrid.gr3</code> into the work directory).
+When running via <code>submit</code>, this stage is promoted to the login node and the dependency
+on <code>hgrid.gr3</code> is resolved automatically via a symlink from the parameter directory.</p>
+<p><strong>How it works:</strong></p>
+<ol>
+<li>Parses <code>hgrid.gr3</code> to extract the coordinates of all open boundary nodes.</li>
+<li>Computes a concave hull around the boundary points (using <code>shapely.concave_hull</code> with
+    <code>ratio=0.05</code>).</li>
+<li>Queries the NOAA CO-OPS API to find active water level stations that fall inside the
+    hull polygon.</li>
+<li>Writes <code>station.in</code> (SCHISM station definition file with elevation-only output flag)
+    and a companion <code>station_noaa_ids.txt</code> that maps each station index to its NOAA
+    station ID.</li>
+</ol>
+<p><strong>Runs On:</strong> Login node (in <code>submit</code> mode) or compute node (in <code>run</code> mode). Requires
+network access for the CO-OPS API call.</p>
 <p><strong>Outputs:</strong></p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>work_dir/
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>├── station.in
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>└── station_noaa_ids.txt
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>├── station.in             # SCHISM station definition file
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>└── station_noaa_ids.txt   # Index-to-NOAA-ID mapping
 </span></code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">param.nml patching</p>
+<p>When <code>station.in</code> exists, the <code>pre_schism</code> stage automatically patches <code>param.nml</code> to
+set <code>iout_sta = 1</code> (enable station output) and <code>nspool_sta = 18</code> (output interval in
+time-steps). The value <code>nspool_sta = 18</code> is chosen because it divides all <code>nhot_write</code>
+values used across domain templates (162, 324, 8640, etc.), satisfying the SCHISM
+constraint <code>mod(nhot_write, nspool_sta) == 0</code>.</p>
+</div>
 <h3 id="7-boundary_conditions">7. boundary_conditions<a class="headerlink" href="#7-boundary_conditions" title="Permanent link">#</a></h3>
 <p><strong>Purpose:</strong> Generate boundary conditions from TPXO or STOFS.</p>
 <p><strong>Tasks (TPXO):</strong></p>
@@ -1632,17 +1649,21 @@ session).</p>
 </ul>
 <p><strong>Runs On:</strong> Compute node (inside Singularity)</p>
 <h3 id="11-schism_plot">11. schism_plot<a class="headerlink" href="#11-schism_plot" title="Permanent link">#</a></h3>
-<p><strong>Purpose:</strong> Compare simulated water levels against NOAA observations.</p>
+<p><strong>Purpose:</strong> Compare SCHISM-simulated water levels against NOAA CO-OPS observations at
+every station discovered by the <code>schism_obs</code> stage.</p>
 <p><strong>Enabled by:</strong> <code>model_config.include_noaa_gages: true</code></p>
-<p><strong>Tasks:</strong></p>
-<ul>
-<li>Read station output from <code>staout_1</code></li>
-<li>Fetch NOAA CO-OPS observed water levels for each station</li>
-<li>Convert observation datum from MLLW to MSL</li>
-<li>Generate 2×2 comparison plots (simulated vs observed)</li>
-<li>Save figures to the <code>figs/</code> directory</li>
-</ul>
-<p><strong>Runs On:</strong> Login node or compute node (Python, requires network access)</p>
+<p><strong>How it works:</strong></p>
+<ol>
+<li>Reads the SCHISM station time-series from <code>outputs/staout_1</code>.</li>
+<li>Loads the station-to-NOAA-ID mapping from <code>station_noaa_ids.txt</code>.</li>
+<li>Fetches observed water levels from the CO-OPS API in the MLLW datum and converts to
+    MSL using per-station datum offsets retrieved from the API.</li>
+<li>Generates 2×2 comparison plots (four stations per figure) showing simulated vs
+    observed water levels.</li>
+<li>Saves PNG figures to the <code>figs/</code> subdirectory.</li>
+</ol>
+<p><strong>Runs On:</strong> Login node (in <code>submit</code> mode, after SLURM job completes) or compute node
+(in <code>run</code> mode). Requires network access for the CO-OPS API call.</p>
 <p><strong>Outputs:</strong></p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>work_dir/
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>└── figs/
@@ -1650,6 +1671,12 @@ session).</p>
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    ├── stations_comparison_002.png
 </span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    └── ...
 </span></code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Datum conversion</p>
+<p>Observations are fetched in MLLW (Mean Lower Low Water) and converted to MSL (Mean Sea
+Level) so they share the same vertical reference as the SCHISM simulation output. The
+conversion offset is obtained from the CO-OPS datums endpoint for each station.</p>
+</div>
 <h2 id="sfincs-stage-details">SFINCS Stage Details<a class="headerlink" href="#sfincs-stage-details" title="Permanent link">#</a></h2>
 <h3 id="1-download_1">1. download<a class="headerlink" href="#1-download_1" title="Permanent link">#</a></h3>
 <p>Same as SCHISM download stage. Downloads NWM meteorological forcing, streamflow, and

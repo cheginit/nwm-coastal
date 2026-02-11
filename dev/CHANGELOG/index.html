@@ -1127,8 +1127,16 @@ this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic V
 <li><code>--start-from</code> and <code>--stop-after</code> options for <code>submit</code> command, matching <code>run</code></li>
 <li><code>requires_container</code> class attribute on <code>WorkflowStage</code> for automatic stage
     classification (Python-only vs container)</li>
-<li><code>schism_obs</code> stage (NOAA observation station discovery) and <code>schism_plot</code> stage
-    (simulated vs observed water level plots) to SCHISM workflow</li>
+<li><code>schism_obs</code> stage: automatic NOAA CO-OPS water level station discovery via concave
+    hull of open boundary nodes, writing <code>station.in</code> and <code>station_noaa_ids.txt</code></li>
+<li><code>schism_plot</code> stage: post-run comparison plots of simulated vs NOAA-observed water
+    levels with MLLW→MSL datum conversion</li>
+<li><code>COOPSAPIClient</code> for querying the NOAA CO-OPS API (station metadata, water levels,
+    datums) with local caching of station metadata</li>
+<li><code>include_noaa_gages</code> option in <code>SchismModelConfig</code> (defaults to <code>false</code>) that enables
+    the <code>schism_obs</code> and <code>schism_plot</code> stages</li>
+<li>Automatic <code>param.nml</code> patching (<code>iout_sta = 1</code>, <code>nspool_sta = 18</code>) when <code>station.in</code>
+    exists, ensuring <code>mod(nhot_write, nspool_sta) == 0</code> across all domain templates</li>
 <li><code>sfincs_wind</code>, <code>sfincs_pressure</code>, and <code>sfincs_plot</code> stages to SFINCS workflow</li>
 <li>SFINCS coastal model workflow with full pipeline (download through sfincs_run)</li>
 <li>Polymorphic <code>ModelConfig</code> ABC with <code>SchismModelConfig</code> and <code>SfincsModelConfig</code>
