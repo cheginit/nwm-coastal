@@ -1284,7 +1284,9 @@ and SFINCS coastal model workflows.</p>
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="go">  - Simulation dates outside nwm_ana range (2018-09-17 to present)</span>
 </span></code></pre></div>
 <h3 id="submit">submit<a class="headerlink" href="#submit" title="Permanent link">#</a></h3>
-<p>Submit a workflow as a SLURM job.</p>
+<p>Submit a workflow as a SLURM job. Python-only stages run on the login node; container
+stages are submitted as a SLURM job. The same stage pipeline is used as the <code>run</code>
+command.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>coastal-calibration<span class="w"> </span>submit<span class="w"> </span>&lt;config&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
 <p><strong>Arguments:</strong></p>
@@ -1317,6 +1319,16 @@ and SFINCS coastal model workflows.</p>
 <td>Wait for job completion with updates</td>
 <td>False</td>
 </tr>
+<tr>
+<td><code>--start-from</code></td>
+<td>Stage to start from (skip earlier)</td>
+<td>First</td>
+</tr>
+<tr>
+<td><code>--stop-after</code></td>
+<td>Stage to stop after (skip later)</td>
+<td>Last</td>
+</tr>
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
@@ -1326,6 +1338,10 @@ and SFINCS coastal model workflows.</p>
 </span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Submit and wait for completion</span>
 </span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>coastal-calibration<span class="w"> </span>submit<span class="w"> </span>config.yaml<span class="w"> </span>--interactive
 </span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>coastal-calibration<span class="w"> </span>submit<span class="w"> </span>config.yaml<span class="w"> </span>-i
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># Submit partial pipeline</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>coastal-calibration<span class="w"> </span>submit<span class="w"> </span>config.yaml<span class="w"> </span>--start-from<span class="w"> </span>boundary_conditions<span class="w"> </span>-i
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>coastal-calibration<span class="w"> </span>submit<span class="w"> </span>config.yaml<span class="w"> </span>--stop-after<span class="w"> </span>post_forcing
 </span></code></pre></div>
 <h3 id="run">run<a class="headerlink" href="#run" title="Permanent link">#</a></h3>
 <p>Run the workflow directly (for testing or inside a SLURM job).</p>
@@ -1398,8 +1414,11 @@ and SFINCS coastal model workflows.</p>
 <li><code>sfincs_obs</code></li>
 <li><code>sfincs_discharge</code></li>
 <li><code>sfincs_precip</code></li>
+<li><code>sfincs_wind</code></li>
+<li><code>sfincs_pressure</code></li>
 <li><code>sfincs_write</code></li>
 <li><code>sfincs_run</code></li>
+<li><code>sfincs_plot</code></li>
 </ul>
 <p><strong>Examples:</strong></p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Run entire workflow</span>
@@ -1469,8 +1488,11 @@ and SFINCS coastal model workflows.</p>
 </span><span id="__span-13-21"><a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="go">  7. sfincs_obs: Add observation points</span>
 </span><span id="__span-13-22"><a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="go">  8. sfincs_discharge: Add discharge sources</span>
 </span><span id="__span-13-23"><a id="__codelineno-13-23" name="__codelineno-13-23" href="#__codelineno-13-23"></a><span class="go">  9. sfincs_precip: Add precipitation forcing</span>
-</span><span id="__span-13-24"><a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a><span class="go">  10. sfincs_write: Write SFINCS model</span>
-</span><span id="__span-13-25"><a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="go">  11. sfincs_run: Run SFINCS model (Singularity)</span>
+</span><span id="__span-13-24"><a id="__codelineno-13-24" name="__codelineno-13-24" href="#__codelineno-13-24"></a><span class="go">  10. sfincs_wind: Add wind forcing</span>
+</span><span id="__span-13-25"><a id="__codelineno-13-25" name="__codelineno-13-25" href="#__codelineno-13-25"></a><span class="go">  11. sfincs_pressure: Add atmospheric pressure forcing</span>
+</span><span id="__span-13-26"><a id="__codelineno-13-26" name="__codelineno-13-26" href="#__codelineno-13-26"></a><span class="go">  12. sfincs_write: Write SFINCS model</span>
+</span><span id="__span-13-27"><a id="__codelineno-13-27" name="__codelineno-13-27" href="#__codelineno-13-27"></a><span class="go">  13. sfincs_run: Run SFINCS model (Singularity)</span>
+</span><span id="__span-13-28"><a id="__codelineno-13-28" name="__codelineno-13-28" href="#__codelineno-13-28"></a><span class="go">  14. sfincs_plot: Plot simulated vs observed water levels</span>
 </span></code></pre></div>
 <h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">#</a></h2>
 <table>
