@@ -883,10 +883,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-update_params" class="md-nav__link">
+  <a href="#5-schism_obs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. update_params
+        5. schism_obs
       
     </span>
   </a>
@@ -894,10 +894,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-boundary_conditions" class="md-nav__link">
+  <a href="#6-update_params" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. boundary_conditions
+        6. update_params
       
     </span>
   </a>
@@ -905,10 +905,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#7-pre_schism" class="md-nav__link">
+  <a href="#7-boundary_conditions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. pre_schism
+        7. boundary_conditions
       
     </span>
   </a>
@@ -916,10 +916,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#8-schism_run" class="md-nav__link">
+  <a href="#8-pre_schism" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8. schism_run
+        8. pre_schism
       
     </span>
   </a>
@@ -927,10 +927,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#9-post_schism" class="md-nav__link">
+  <a href="#9-schism_run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        9. post_schism
+        9. schism_run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-post_schism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. post_schism
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-schism_plot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. schism_plot
       
     </span>
   </a>
@@ -1416,11 +1438,13 @@ specific task in the simulation pipeline. The stage order depends on the selecte
     A[download] --&gt; B[pre_forcing]
     B --&gt; C[nwm_forcing]
     C --&gt; D[post_forcing]
-    D --&gt; E[update_params]
-    E --&gt; F[boundary_conditions]
-    F --&gt; G[pre_schism]
-    G --&gt; H[schism_run]
-    H --&gt; I[post_schism]</code></pre>
+    D --&gt; E[schism_obs]
+    E --&gt; F[update_params]
+    F --&gt; G[boundary_conditions]
+    G --&gt; H[pre_schism]
+    H --&gt; I[schism_run]
+    I --&gt; J[post_schism]
+    J --&gt; K[schism_plot]</code></pre>
 <h2 id="sfincs-stage-overview">SFINCS Stage Overview<a class="headerlink" href="#sfincs-stage-overview" title="Permanent link">#</a></h2>
 <pre class="mermaid"><code>flowchart TD
     A[download] --&gt; B[sfincs_symlinks]
@@ -1486,7 +1510,23 @@ specific task in the simulation pipeline. The stage order depends on the selecte
 <li>Clean up temporary files</li>
 </ul>
 <p><strong>Runs On:</strong> Compute node (inside Singularity)</p>
-<h3 id="5-update_params">5. update_params<a class="headerlink" href="#5-update_params" title="Permanent link">#</a></h3>
+<h3 id="5-schism_obs">5. schism_obs<a class="headerlink" href="#5-schism_obs" title="Permanent link">#</a></h3>
+<p><strong>Purpose:</strong> Discover NOAA CO-OPS observation stations and create <code>station.in</code>.</p>
+<p><strong>Enabled by:</strong> <code>model_config.include_noaa_gages: true</code></p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li>Read open boundary nodes from <code>hgrid.gr3</code></li>
+<li>Compute concave hull of boundary node coordinates</li>
+<li>Query NOAA CO-OPS API for water level stations within the hull polygon</li>
+<li>Write <code>station.in</code> and <code>station_noaa_ids.txt</code> to the work directory</li>
+</ul>
+<p><strong>Runs On:</strong> Login node or compute node (Python, requires network access)</p>
+<p><strong>Outputs:</strong></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>work_dir/
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── station.in
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>└── station_noaa_ids.txt
+</span></code></pre></div>
+<h3 id="6-update_params">6. update_params<a class="headerlink" href="#6-update_params" title="Permanent link">#</a></h3>
 <p><strong>Purpose:</strong> Generate SCHISM parameter file.</p>
 <p><strong>Tasks:</strong></p>
 <ul>
@@ -1496,10 +1536,10 @@ specific task in the simulation pipeline. The stage order depends on the selecte
 </ul>
 <p><strong>Runs On:</strong> Compute node (inside Singularity)</p>
 <p><strong>Outputs:</strong></p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>work_dir/
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>└── param.nml
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>work_dir/
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>└── param.nml
 </span></code></pre></div>
-<h3 id="6-boundary_conditions">6. boundary_conditions<a class="headerlink" href="#6-boundary_conditions" title="Permanent link">#</a></h3>
+<h3 id="7-boundary_conditions">7. boundary_conditions<a class="headerlink" href="#7-boundary_conditions" title="Permanent link">#</a></h3>
 <p><strong>Purpose:</strong> Generate boundary conditions from TPXO or STOFS.</p>
 <p><strong>Tasks (TPXO):</strong></p>
 <ul>
@@ -1514,16 +1554,18 @@ specific task in the simulation pipeline. The stage order depends on the selecte
 <li>Create <code>elev2D.th.nc</code> file</li>
 </ul>
 <p><strong>Runs On:</strong> Compute node (inside Singularity)</p>
-<h3 id="7-pre_schism">7. pre_schism<a class="headerlink" href="#7-pre_schism" title="Permanent link">#</a></h3>
+<h3 id="8-pre_schism">8. pre_schism<a class="headerlink" href="#8-pre_schism" title="Permanent link">#</a></h3>
 <p><strong>Purpose:</strong> Final preparation before SCHISM execution.</p>
 <p><strong>Tasks:</strong></p>
 <ul>
 <li>Validate all input files present</li>
 <li>Set up symbolic links</li>
 <li>Configure MPI environment</li>
+<li>If <code>include_noaa_gages</code> is enabled and <code>station.in</code> exists, patch <code>param.nml</code> to set
+    <code>iout_sta = 1</code> for station output</li>
 </ul>
 <p><strong>Runs On:</strong> Compute node (inside Singularity)</p>
-<h3 id="8-schism_run">8. schism_run<a class="headerlink" href="#8-schism_run" title="Permanent link">#</a></h3>
+<h3 id="9-schism_run">9. schism_run<a class="headerlink" href="#9-schism_run" title="Permanent link">#</a></h3>
 <p><strong>Purpose:</strong> Execute the SCHISM model.</p>
 <p><strong>Tasks:</strong></p>
 <ul>
@@ -1538,7 +1580,7 @@ specific task in the simulation pipeline. The stage order depends on the selecte
 <li>OpenMP threads configured via <code>omp_num_threads</code></li>
 <li>Total processes = <code>nodes * ntasks_per_node</code></li>
 </ul>
-<h3 id="9-post_schism">9. post_schism<a class="headerlink" href="#9-post_schism" title="Permanent link">#</a></h3>
+<h3 id="10-post_schism">10. post_schism<a class="headerlink" href="#10-post_schism" title="Permanent link">#</a></h3>
 <p><strong>Purpose:</strong> Post-process SCHISM outputs.</p>
 <p><strong>Tasks:</strong></p>
 <ul>
@@ -1547,6 +1589,25 @@ specific task in the simulation pipeline. The stage order depends on the selecte
 <li>Create visualization-ready files</li>
 </ul>
 <p><strong>Runs On:</strong> Compute node (inside Singularity)</p>
+<h3 id="11-schism_plot">11. schism_plot<a class="headerlink" href="#11-schism_plot" title="Permanent link">#</a></h3>
+<p><strong>Purpose:</strong> Compare simulated water levels against NOAA observations.</p>
+<p><strong>Enabled by:</strong> <code>model_config.include_noaa_gages: true</code></p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li>Read station output from <code>staout_1</code></li>
+<li>Fetch NOAA CO-OPS observed water levels for each station</li>
+<li>Convert observation datum from MLLW to MSL</li>
+<li>Generate 2×2 comparison plots (simulated vs observed)</li>
+<li>Save figures to the <code>figs/</code> directory</li>
+</ul>
+<p><strong>Runs On:</strong> Login node or compute node (Python, requires network access)</p>
+<p><strong>Outputs:</strong></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>work_dir/
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>└── figs/
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    ├── stations_comparison_001.png
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    ├── stations_comparison_002.png
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    └── ...
+</span></code></pre></div>
 <h2 id="sfincs-stage-details">SFINCS Stage Details<a class="headerlink" href="#sfincs-stage-details" title="Permanent link">#</a></h2>
 <h3 id="1-download_1">1. download<a class="headerlink" href="#1-download_1" title="Permanent link">#</a></h3>
 <p>Same as SCHISM download stage. Downloads NWM meteorological forcing, streamflow, and
@@ -1623,23 +1684,23 @@ STOFS water level data.</p>
 <p><strong>Runs On:</strong> Compute node (OpenMP, inside Singularity)</p>
 <h2 id="running-partial-workflows">Running Partial Workflows<a class="headerlink" href="#running-partial-workflows" title="Permanent link">#</a></h2>
 <h3 id="cli">CLI<a class="headerlink" href="#cli" title="Permanent link">#</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># SCHISM examples</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--stop-after<span class="w"> </span>download
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--start-from<span class="w"> </span>pre_forcing<span class="w"> </span>--stop-after<span class="w"> </span>post_forcing
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--start-from<span class="w"> </span>boundary_conditions
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># SFINCS examples</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--stop-after<span class="w"> </span>sfincs_write
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--start-from<span class="w"> </span>sfincs_run
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># SCHISM examples</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--stop-after<span class="w"> </span>download
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--start-from<span class="w"> </span>pre_forcing<span class="w"> </span>--stop-after<span class="w"> </span>post_forcing
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--start-from<span class="w"> </span>boundary_conditions
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># SFINCS examples</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--stop-after<span class="w"> </span>sfincs_write
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--start-from<span class="w"> </span>sfincs_run
 </span></code></pre></div>
 <h3 id="python-api">Python API<a class="headerlink" href="#python-api" title="Permanent link">#</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coastal_calibration</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoastalCalibConfig</span><span class="p">,</span> <span class="n">CoastalCalibRunner</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">CoastalCalibConfig</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="s2">&quot;config.yaml&quot;</span><span class="p">)</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">CoastalCalibRunner</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># Run specific stages</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">start_from</span><span class="o">=</span><span class="s2">&quot;pre_forcing&quot;</span><span class="p">,</span> <span class="n">stop_after</span><span class="o">=</span><span class="s2">&quot;post_forcing&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">coastal_calibration</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoastalCalibConfig</span><span class="p">,</span> <span class="n">CoastalCalibRunner</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">CoastalCalibConfig</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="s2">&quot;config.yaml&quot;</span><span class="p">)</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">runner</span> <span class="o">=</span> <span class="n">CoastalCalibRunner</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># Run specific stages</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">start_from</span><span class="o">=</span><span class="s2">&quot;pre_forcing&quot;</span><span class="p">,</span> <span class="n">stop_after</span><span class="o">=</span><span class="s2">&quot;post_forcing&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">#</a></h2>
 <p>If a stage fails:</p>
@@ -1650,23 +1711,25 @@ STOFS water level data.</p>
 <li>Exit code indicates failure</li>
 </ol>
 <p>To resume after fixing an issue:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Resume from the failed stage</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--start-from<span class="w"> </span>&lt;failed_stage&gt;
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Resume from the failed stage</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>coastal-calibration<span class="w"> </span>run<span class="w"> </span>config.yaml<span class="w"> </span>--start-from<span class="w"> </span>&lt;failed_stage&gt;
 </span></code></pre></div>
 <h2 id="stage-timing">Stage Timing<a class="headerlink" href="#stage-timing" title="Permanent link">#</a></h2>
 <p>When <code>enable_timing</code> is true in the monitoring configuration, stage durations are
 tracked and reported:</p>
-<div class="language-console highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="go">Stage timing:</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="go">  download: 45.2s</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="go">  pre_forcing: 12.3s</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="go">  nwm_forcing: 234.5s</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="go">  post_forcing: 8.7s</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="go">  update_params: 2.1s</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="go">  boundary_conditions: 156.8s</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="go">  pre_schism: 5.4s</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="go">  schism_run: 1823.6s</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="go">  post_schism: 67.2s</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="go">Total: 2355.8s</span>
+<div class="language-console highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="go">Stage timing:</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="go">  download: 45.2s</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="go">  pre_forcing: 12.3s</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="go">  nwm_forcing: 234.5s</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="go">  post_forcing: 8.7s</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="go">  schism_obs: 3.8s</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="go">  update_params: 2.1s</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="go">  boundary_conditions: 156.8s</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="go">  pre_schism: 5.4s</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="go">  schism_run: 1823.6s</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="go">  post_schism: 67.2s</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="go">  schism_plot: 15.4s</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="go">Total: 2375.0s</span>
 </span></code></pre></div>
 
 
