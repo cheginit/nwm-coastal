@@ -883,10 +883,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-schism_obs" class="md-nav__link">
+  <a href="#5-update_params" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. schism_obs
+        5. update_params
       
     </span>
   </a>
@@ -894,10 +894,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-update_params" class="md-nav__link">
+  <a href="#6-schism_obs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. update_params
+        6. schism_obs
       
     </span>
   </a>
@@ -1438,8 +1438,8 @@ specific task in the simulation pipeline. The stage order depends on the selecte
     A[download] --&gt; B[pre_forcing]
     B --&gt; C[nwm_forcing]
     C --&gt; D[post_forcing]
-    D --&gt; E[schism_obs]
-    E --&gt; F[update_params]
+    D --&gt; E[update_params]
+    E --&gt; F[schism_obs]
     F --&gt; G[boundary_conditions]
     G --&gt; H[pre_schism]
     H --&gt; I[schism_run]
@@ -1510,9 +1510,25 @@ specific task in the simulation pipeline. The stage order depends on the selecte
 <li>Clean up temporary files</li>
 </ul>
 <p><strong>Runs On:</strong> Compute node (inside Singularity)</p>
-<h3 id="5-schism_obs">5. schism_obs<a class="headerlink" href="#5-schism_obs" title="Permanent link">#</a></h3>
+<h3 id="5-update_params">5. update_params<a class="headerlink" href="#5-update_params" title="Permanent link">#</a></h3>
+<p><strong>Purpose:</strong> Generate SCHISM parameter file and symlink mesh files.</p>
+<p><strong>Tasks:</strong></p>
+<ul>
+<li>Symlink <code>hgrid.gr3</code> and other mesh files into the work directory</li>
+<li>Create <code>param.nml</code> with simulation parameters</li>
+<li>Set time stepping configuration</li>
+<li>Configure output options</li>
+</ul>
+<p><strong>Runs On:</strong> Compute node (inside Singularity)</p>
+<p><strong>Outputs:</strong></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>work_dir/
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── hgrid.gr3 (symlink)
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>└── param.nml
+</span></code></pre></div>
+<h3 id="6-schism_obs">6. schism_obs<a class="headerlink" href="#6-schism_obs" title="Permanent link">#</a></h3>
 <p><strong>Purpose:</strong> Discover NOAA CO-OPS observation stations and create <code>station.in</code>.</p>
 <p><strong>Enabled by:</strong> <code>model_config.include_noaa_gages: true</code></p>
+<p><strong>Depends on:</strong> <code>update_params</code> (which symlinks <code>hgrid.gr3</code> into the work directory)</p>
 <p><strong>Tasks:</strong></p>
 <ul>
 <li>Read open boundary nodes from <code>hgrid.gr3</code></li>
@@ -1522,22 +1538,9 @@ specific task in the simulation pipeline. The stage order depends on the selecte
 </ul>
 <p><strong>Runs On:</strong> Login node or compute node (Python, requires network access)</p>
 <p><strong>Outputs:</strong></p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>work_dir/
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── station.in
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>└── station_noaa_ids.txt
-</span></code></pre></div>
-<h3 id="6-update_params">6. update_params<a class="headerlink" href="#6-update_params" title="Permanent link">#</a></h3>
-<p><strong>Purpose:</strong> Generate SCHISM parameter file.</p>
-<p><strong>Tasks:</strong></p>
-<ul>
-<li>Create <code>param.nml</code> with simulation parameters</li>
-<li>Set time stepping configuration</li>
-<li>Configure output options</li>
-</ul>
-<p><strong>Runs On:</strong> Compute node (inside Singularity)</p>
-<p><strong>Outputs:</strong></p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>work_dir/
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>└── param.nml
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>├── station.in
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>└── station_noaa_ids.txt
 </span></code></pre></div>
 <h3 id="7-boundary_conditions">7. boundary_conditions<a class="headerlink" href="#7-boundary_conditions" title="Permanent link">#</a></h3>
 <p><strong>Purpose:</strong> Generate boundary conditions from TPXO or STOFS.</p>
@@ -1722,8 +1725,8 @@ tracked and reported:</p>
 </span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="go">  pre_forcing: 12.3s</span>
 </span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="go">  nwm_forcing: 234.5s</span>
 </span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="go">  post_forcing: 8.7s</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="go">  schism_obs: 3.8s</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="go">  update_params: 2.1s</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="go">  update_params: 2.1s</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="go">  schism_obs: 3.8s</span>
 </span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="go">  boundary_conditions: 156.8s</span>
 </span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="go">  pre_schism: 5.4s</span>
 </span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="go">  schism_run: 1823.6s</span>
